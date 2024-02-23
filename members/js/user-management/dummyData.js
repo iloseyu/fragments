@@ -2,7 +2,7 @@
  * @param {URL | string} url
  * @param {RequestInit} options
  */
-export default async function fetch(url, options) {
+export default async function fetch(url, options = {}) {
     if (url.pathname.startsWith('/api/members')) {
         return {
             ok: true,
