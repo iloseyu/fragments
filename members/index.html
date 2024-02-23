@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="kr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+            crossorigin="anonymous"></script>
+    <script type="module">
+        /**
+         * @typedef {Record<string, string | string[] | Record<string, string>>} ElementProp
+         * @property {string} tag 생성할 태그
+         * @property {string[]} [classes] 기존 클래스에 추가 될 클래스
+         * @property {Record<string, string>} [dataset] 기존 데이터셋을 덮어씌움
+         * @property {Record<string, string | boolean>} [attributes] 기존 속성을 덮어씌움
+         * @property {string} [textContent] children 이 있을 경우 무시됨
+         */
+
+        import UserDetail from "/js/user-management/UserDetail.js";
+        import SearchCondition from "./js/user-management/SearchCondition.js";
+        const userDetail = new UserDetail('userDetail');
+        const searchCondition = new SearchCondition('searchCondition');
+
+        userDetail.render();
+        searchCondition.render();
+
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <button class="btn btn-outline-dark">< 목록</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4" id="userDetail">
+                유저 상세 정보
+            </div>
+            <div class="col" id="searchCondition">
+                회원 데이터
+            </div>
+        </div>
+    </div>    
+</body>
+</html>
