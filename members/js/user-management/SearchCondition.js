@@ -1,6 +1,7 @@
 import AbstractRenderer from "/js/common/AbstractRenderer.js";
 import ObjectUtil from "../common/ObjectUtil.js";
 
+
 export default class SearchCondition extends AbstractRenderer {
 
     #categories = [
