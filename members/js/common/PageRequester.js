@@ -1,4 +1,4 @@
-import {fetch} from '/js/dummyData/dummyData.js';
+import { fetch } from '/js/user-management/dummyData.js';
 
 export default class PageRequester {
 	static #baseUrl = window.location.origin;
