@@ -21,29 +21,42 @@
 
         import UserDetail from "/js/user-management/UserDetail.js";
         import SearchCondition from "./js/user-management/SearchCondition.js";
+        import SearchResult from "./js/user-management/SearchResult.js";
+
         const userDetail = new UserDetail('userDetail');
         const searchCondition = new SearchCondition('searchCondition');
+        const searchResult = new SearchResult('searchResult');
 
         userDetail.render();
         searchCondition.render();
+        searchResult.render();
 
     </script>
 </head>
 <body>
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <button class="btn btn-outline-dark">< 목록</button>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-outline-dark">< 목록</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-4" id="userDetail">
+            유저 상세 정보
+        </div>
+        <div class="col">
+            <div class="row">
+                <div id="searchCondition">
+                    회원 데이터
+                </div>
+            </div>
+            <div class="row">
+                <div id="searchResult">
+                    예약 등 변동내용
+                </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-4" id="userDetail">
-                유저 상세 정보
-            </div>
-            <div class="col" id="searchCondition">
-                회원 데이터
-            </div>
-        </div>
-    </div>    
+    </div>
+</div>
 </body>
 </html>

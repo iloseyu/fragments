@@ -1,19 +1,19 @@
 import fetch from '/js/user-management/dummyData.js';
 
 /**
- * @typedef {Object} MemberDetail
+ * @typedef {Object} MemberLessons
  * @property {Object} meta
  * @property {Object} data
  */
 
 /**
  *
- * @returns {Promise<MemberDetail>}
+ * @returns {Promise<MemberLessons>}
  */
-const membersDetail = async () => {
-    const apiUrl = new URL('/api/members', location.origin);
-    console.log('location.origin = ', location.origin);
-    console.log('apiUrl = ', apiUrl);
+const memberLessons = async () => {
+    // 실제 url = /api/com/*(권한)/members/{id}
+    // 넣을 정보: tickets number (01은 레슨, 02는 이용권)
+    const apiUrl = new URL('/api/members/lessons', location.origin);
     const response = await fetch(apiUrl,{});
     if (!response.ok) {
         throw new Error('데이터를 불러오는데 실패했습니다.');
@@ -27,4 +27,4 @@ const membersDetail = async () => {
     return response.json();
 }
 
-export { membersDetail };
+export { memberLessons };

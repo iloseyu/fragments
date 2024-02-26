@@ -1,4 +1,33 @@
 /**
+ * @typedef {Record<string, string | string[] | Record<string, string>>} ElementProp
+ * @property {string} tag 생성할 태그
+ * @property {string[]} [classes] 기존 클래스에 추가 될 클래스
+ * @property {Record<string, string>} [dataset] 기존 데이터셋을 덮어씌움
+ * @property {Record<string, string | boolean>} [attributes] 기존 속성을 덮어씌움
+ * @property {string} [textContent] children 이 있을 경우 무시됨
+ */
+
+/**
+ * @typedef {Object} CellProp
+ * @property {string} textContent
+ * @property {Record<string, string>} [dataset]
+ */
+
+/**
+ * @typedef {Object} AnchorProp
+ * @property {string} textContent
+ * @property {AnchorAttribute} attributes
+ * @property {Record<string, string>} [dataset]
+ */
+
+/**
+ * @typedef {Object} AnchorAttribute
+ * @property {string} href
+ * @property {string} [target]
+ * @property {string} [rel]
+ */
+
+/**
  * 오브젝트를 합성하거나 dom과 합성하기 위한 유틸리티 클래스
  */
 export default class ObjectUtil {
@@ -33,7 +62,11 @@ export default class ObjectUtil {
 				Object.assign(origin.dataset, value);
 			} else if (key === 'attributes') {
 				Object.entries(value).forEach(([attrKey, attrValue]) => {
-					origin.setAttribute(attrKey, attrValue);
+					if (attrKey === 'disabled' && attrValue === false) {
+						origin.removeAttribute(attrKey);
+					} else {
+						origin.setAttribute(attrKey, attrValue);
+					}
 				})
 			}
 			// properties 계열
@@ -61,20 +94,16 @@ export default class ObjectUtil {
 				Object.assign(element.dataset, prop.dataset);
 			} else if (key === 'attributes') {
 				Object.entries(value).forEach(([attrKey, attrValue]) => {
-					if (attrKey === 'disabled' || attrKey === 'readonly' || attrKey === 'hidden') {
-						if (attrValue === 'true') {
-							element.setAttribute(attrKey, '');
-						} else {
-							element.removeAttribute(attrKey);
-						}
-					} else {
 						element.setAttribute(attrKey, attrValue);
-					}
 				})
 			}
 			// properties 계열
 			else if (key === 'textContent') {
 				element.textContent = value;
+			} else if (key === 'innerHTML') {
+				element.innerHTML = value;
+			} else if (key === 'disabled' || key === 'readOnly' || key === 'hidden' || key === 'selected') {
+				element[key] = value;
 			}
 		});
 		return element;

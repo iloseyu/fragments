@@ -6,17 +6,17 @@ export default class UserDetail extends AbstractRenderer {
     #data = [
         ["loginId", "아이디"],
         ["userName", "이름"],
-        ["userDiv", "회원구분"],
+        ["userSt", "회원구분"],
         ["sexDiv", "성별"],
-        ["userBirth", "생년월일"],
-        ["userAddress", "주소"],
-        ["userEmail", "이메일"],
-        ["userPhone", "휴대폰번호"],
-        ["userRegDate", "등록일"],
-        ["userStatus", "회원상태"],
-        ["userInflow", "유입경로"],
-        ["userRecommender", "추천인명"],
-        ["userPro", "담당프로"]/*,
+        ["birthDate", "생년월일"],
+        ["addr", "주소"],
+        ["email", "이메일"],
+        ["mbtlNo", "휴대폰번호"],
+        ["joinDate", "등록일"],
+        ["mbrSt", "회원상태"],
+        ["entryPoint", "유입경로"],
+        ["rectMbrName", "추천인명"],
+        ["rspProUserId", "담당프로"]/*,
         ["userTerms", "서비스 약관"],
         ["userPrivacy", "개인정보 처리방침"],
         ["userMarketing", "마케팅 정보 수신 동의"],
@@ -84,7 +84,7 @@ export default class UserDetail extends AbstractRenderer {
         editButton.addEventListener("click", this.#handleEdit);
         const deleteButton = this.#createDeleteButton();
         deleteButton.addEventListener("click", this.#handleDelete);
-        const buttons = ObjectUtil.DivWrapping([editButton, deleteButton], {classes: ["btn-group", "float-end", "mb-3"]});
+        const buttons = ObjectUtil.DivWrapping([editButton, deleteButton], {classes: ["float-end", "mb-3"]});
 
         form.appendChild(buttons);
 
@@ -92,7 +92,7 @@ export default class UserDetail extends AbstractRenderer {
             formFieldProp.input.attributes.value = this.#userDetail.data[formFieldProp.input.attributes.id];
             const label = ObjectUtil.createElement(formFieldProp.label);
             const input = ObjectUtil.createElement(formFieldProp.input);
-            const div = ObjectUtil.DivWrapping([label, input], {classes: ["input-group", "mb-1"]});
+            const div = ObjectUtil.DivWrapping([label, input], {classes: ["input-group", "my-3"]});
             form.appendChild(div);
         });
 
