@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="kr"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layouts/default}">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+            crossorigin="anonymous"></script>
+</head>
+<body>
+<main layout:fragment="content" class="board-list">
+    <div class="container">
+
+        <div class="row">
+            <div class="col-4">
+                <div id="user-detail"></div>
+            </div>
+
+            <div class="col-8">
+                <form id="search-conditions">
+                    Search Conditions
+                </form>
+
+                <div class="row text-end">
+                    <div class="col" id="rangex-key-info"></div>
+                    <div class="col-3" id="information-change-buttons"></div>
+                </div>
+
+                <div id="userPagingTable">
+                    <div class="alert alert-warning" role="alert">
+                        조회된 내역이 없습니다.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module" th:inline="javascript">
+        import dataRequester from "/js/common/dataRequester.js";
+        import UserPagingTable from "/js/user-management/UserPagingTable.js";
+        import UserDetail from "/js/user-management/detail/UserDetail.js";
+        import SearchConditions from "/js/user-management/detail/SearchConditions.js";
+        const path = location.pathname;
+        const userRole = [[${session.loginUser.getUserRole()}]];
+
+        const searchConditions = new SearchConditions('search-conditions');
+        const userDetail = new UserDetail('user-detail');
+
+        /**
+         * 회원 상세 정보 렌더링
+         */
+        userDetail.render();
+
+        const checkbox = '<input type="checkbox" class="form-check-input" name="id" value="id">';
+
+        const userPagingTable = new UserPagingTable('userPagingTable', {
+
+            headerData: [
+                [
+                    {key: 'id', name: '#'},
+                    {key: 'creDate', name: '예약일시', type: 'dateTime'},
+                    {key: 'teeBoxId', name: '타석이름'}],
+                [
+                    {key: 'id', name: 'check', type: 'radioButton'},
+                    {key: 'id', name: '#'},
+                    // {key: 'creDate', name: '결제일시', type: 'dateTime'},
+                    {key: 'productName', name: '상품명'},
+                    {key: 'usableCount', name: '사용가능'},
+                    {key: 'limitCount', name: '전체횟수'},
+                    {key: 'useStartDate', name: '시작일'},
+                    {key: 'useEndDate', name: '종료일'},
+                    // {key: 'paymentPrice', name: '결제금액', type: 'currency'},
+                    {key: 'status', name: '상태'}],
+                [
+                    {key: 'id', name: 'check', type: 'radioButton'},
+                    {key: 'id', name: '#'},
+                    // {key: 'creDate', name: '결제일시', type: 'dateTime'},
+                    {key: 'productName', name: '상품명'},
+                    {key: 'usableCount', name: '사용가능'},
+                    {key: 'limitCount', name: '전체횟수'},
+                    {key: 'useStartDate', name: '시작일'},
+                    {key: 'useEndDate', name: '종료일'},
+                    // {key: 'paymentPrice', name: '결제금액', type: 'currency'},
+                    {key: 'status', name: '상태'}/*,
+                    {key: 'rangexTicketKey', name: 'rangeX', type: 'rangexKey'}*/]
+            ],
+            bodyEndPoint: ['/api/com' + path + '/reservations', '/api' + path + '/tickets?division=01', '/api' + path + '/tickets?division=02'],
+        }, 1, false, false);
+
+
+        /**
+         * 검색 조건 이벤트
+         */
+        searchConditions.render();
+        userPagingTable.render();
+        searchConditions.triggerSubmit();
+
+    </script>
+</main>
+</body>
+</html>
