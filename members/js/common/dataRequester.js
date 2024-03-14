@@ -11,12 +11,23 @@
  * @param {String} csrfToken csrf 토큰
  * @returns {Promise<any|Error>} - 응답 데이터의 Promise 또는 에러 발생 시 Error 객체의 Promise.
  */
-const requester = async (method, url, data = null, csrfToken) => {
+const requester = async (method, url, data = null, contentType, xCsrfToken, authorization) => {
 	const isFormData = data instanceof FormData;
-	const headers = method !== 'GET' && !isFormData ?
-    csrfToken !== undefined ? { 'Content-Type': 'application/json',  'X-CSRF-TOKEN': csrfToken }
-	: { 'Content-Type': 'application/json' }
-	: {};
+
+    const headers = {};
+
+	if(contentType){
+	    headers["Content-Type"] = contentType;
+	}
+
+	if(xCsrfToken){
+	    headers["X-CSRF-TOKEN"] = xCsrfToken;
+	}
+
+	if(authorization){
+        headers["Authorization"] = authorization;
+    }
+
 	let body;
 
 	if (method !== 'GET') {

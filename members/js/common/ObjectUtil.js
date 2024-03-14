@@ -94,7 +94,7 @@ export default class ObjectUtil {
 				Object.assign(element.dataset, prop.dataset);
 			} else if (key === 'attributes') {
 				Object.entries(value).forEach(([attrKey, attrValue]) => {
-						element.setAttribute(attrKey, attrValue);
+					element.setAttribute(attrKey, attrValue);
 				})
 			}
 			// properties 계열
@@ -104,36 +104,11 @@ export default class ObjectUtil {
 				element.innerHTML = value;
 			} else if (key === 'disabled' || key === 'readOnly' || key === 'hidden' || key === 'selected') {
 				element[key] = value;
+			} else if (key === 'child') {
+				element.appendChild(value);
 			}
 		});
 		return element;
-	}
-
-	/**
-	 * 프롭스에 프롭스를 머지합니다.
-	 * @param {ElementProp} origin
-	 * @param {ElementProp} source
-	 * @param {WeakMap} hash
-	 * @returns {ElementProp}
-	 */
-	static propsDeepMerge(origin, source, hash = new WeakMap()) {
-		if (hash.has(source)) {
-			return hash.get(source);
-		}
-		hash.set(source, origin);
-
-		Reflect.ownKeys(source).forEach(key => {
-			if (typeof source[key] === 'object' && source[key] !== null) {
-				if (typeof origin[key] !== 'object' || origin[key] === null) {
-					origin[key] = Array.isArray(source[key]) ? [] : {};
-				}
-				this.propsDeepMerge(origin[key], source[key], hash);
-			} else {
-				origin[key] = source[key];
-			}
-		});
-
-		return origin;
 	}
 
 	/**
@@ -142,6 +117,7 @@ export default class ObjectUtil {
 	 * @param {Record<string, string>} [detail]
 	 */
 	static dispatchEvent(eventName, detail) {
+		console.debug("<ObjectUtil.dispatchEvent>", eventName, detail);
 		const dispatchEvent = new CustomEvent(eventName, {
 			detail,
 			bubbles: true,

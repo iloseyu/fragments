@@ -1,85 +1,41 @@
 import AbstractRenderer from "/js/common/AbstractRenderer.js";
-import {memberLessons} from "/js/user-management/membersTicketsAPI.js";
-import ObjectUtil from "../common/ObjectUtil.js";
+import { memberLessons, memberTeeboxes } from "/js/user-management/membersTicketsAPI.js";
+import ObjectUtil from "/js/common/ObjectUtil.js";
+import PagingTable from "/js/common/PagingTable.js";
 
 export default class SearchResult extends AbstractRenderer {
 
-    #headerData = [
-        ['id', '#'],
-        ['creDate', '결제일'],
-        ['name', '상품명'],
-        ['useYnCount', '사용/전체'],
-        ['searchStartDate', '시작일'],
-        ['searchEndDate', '종료일'],
-        ['paymentPrice', '결제금액'],
-        ['ticketStatus', '상태']
+    #headerDataLessons = [
+        {key: 'id', name: '#'},
+        {key: 'creDate', name: '결제일'},
+        {key: 'name', name: '상품명'},
+        {key: 'useYnCount', name: '사용/전체'},
+        {key: 'searchStartDate', name: '시작일'},
+        {key: 'searchEndDate', name: '종료일'},
+        {key: 'paymentPrice', name: '결제금액'},
+        {key: 'ticketStatus', name: '상태'}
     ]
 
-    #bodyData;
+    #headerDataTickets = [
+        {key: 'id', name: '#'},
+        {key: 'creDate', name: '결제일'},
+        {key: 'name', name: '상품명(회)'},
+        {key: 'useYnCount', name: '사용/전체'},
+        {key: 'searchStartDate', name: '시작일'},
+        {key: 'searchEndDate', name: '종료일'},
+        {key: 'paymentPrice', name: '결제금액'},
+        {key: 'ticketStatus', name: '상태'}
+    ]
 
-    #createSearchResultLessonsMetaData() {
-
-        /*        return this.#headerData.map(([key, value]) => {
-                    return {
-                        label: {
-                            tag: "th",
-                            textContent: value,
-                            attributes: {for: key}
-                        },
-                        input: {
-                            tag: "td",
-                            attributes: {type: "text", id: key}
-                        }
-                    }
-                });*/
-
-        let data = {};
-        let th = {};
-        let tds = [];
-
-        for (let i = 0; i < this.#headerData.length; i++) {
-            const [key, value] = this.#headerData[i];
-            console.log('[i] ', i);
-            console.log('key = ', key);
-            console.log('value = ', value);
-            th = {
-                tag: "th",
-                textContent: value,
-                attributes: {for: key}
-            };
-            console.log('this.#membersLessons.data.content = ', this.#bodyData.data.content);
-            for (let j = 0; j < this.#bodyData.data.content.length; j++) {
-                console.log('[j] ', this.#bodyData.data.content[j].id);
-                const td = {
-                    tag: "td",
-                    textContent: this.#bodyData.data.content[j].id
-                };
-                console.log('td = ', td);
-                tds.push(td);
-            }
-        }
-
-        data.push({th, tds});
-
-        console.log("data?");
-        console.dir(data);
-
-        return data;
-
-        /*        return this.#headerData.map(([key, text]) => {
-                    return {
-                        tag: "th",
-                        textContent: text,
-                        attributes: {scope: "col"}
-                    }
-                });*/
-    }
+    #bodyDataReservations;
+    #bodyDataLessons;
+    #bodyDataTeeboxes;
 
     #createSearchResultLessonsThMetaData() {
-        return this.#headerData.map(([key, text]) => {
+        return this.#headerDataLessons.map(({key, name}) => {
             return {
                 tag: "th",
-                textContent: text,
+                textContent: name,
                 attributes: {scope: "col"}
             }
         });
@@ -88,13 +44,13 @@ export default class SearchResult extends AbstractRenderer {
     #createSearchResultLessonsTdMetaData() {
         let result = [];
 
-        this.#bodyData.data.content.forEach(value => {
+        this.#bodyDataLessons.data.content.forEach(value => {
             let columns = [];
-            Object.entries(this.#headerData).forEach((key) => {
+            Object.entries(this.#headerDataLessons).forEach((key, name) => {
                 let data = {};
 
                 data.tag = "td";
-                data.textContent = value[key[1][0]];
+                data.textContent = value[key[1].key];
 
                 columns.push(data);
             });
@@ -104,13 +60,50 @@ export default class SearchResult extends AbstractRenderer {
         return result;
     }
 
-    async render() {
-        this.#bodyData = await memberLessons();
+    #createSearchResultTeeboxesThMetaData() {
+        let result = [];
+
+        this.#bodyDataLessons.data.content.forEach(value => {
+            let columns = [];
+            Object.entries(this.#headerDataLessons).forEach((key, name) => {
+                let data = {};
+
+                data.tag = "td";
+                data.textContent = value[key[1].key];
+
+                columns.push(data);
+            });
+        });
+    }
+
+    async render(value) {
+        console.log("value? " + value);
+        if (value === "Reservations") {
+            // this.#bodyDataReservations = await memberReservations();
+        } else if (value === "Lessons") {
+            this.#bodyDataLessons = await memberLessons();
+            this._createElement(value);
+        } else if (value === "Teeboxes") {
+            this.#bodyDataTeeboxes = await memberTeeboxes();
+        }
 
         await super.render();
     }
 
-    _createElement() {
+    _createElement(value) {
+        if (value === "Reservations") {
+            //TODO 예약내역 테이블 생성
+        }
+        else if (value === "Lessons") {
+            return this.#createLessonsTable();
+        }
+        else if (value === "Teeboxes") {
+            return this.#createTeeboxesTable();
+        }
+
+    }
+
+    #createLessonsTable() {
         const table = ObjectUtil.createElement({tag: "table", classes: ["table", "table-hover"]});
 
         const thead = ObjectUtil.createElement({tag: "thead"});
@@ -133,21 +126,12 @@ export default class SearchResult extends AbstractRenderer {
             tbody.appendChild(tbodyTr);
         });
 
-
-        /*        this.#createSearchResultLessonsMetaData().forEach(lessonData => {
-                    const th = ObjectUtil.createElement(lessonData.th);
-                    const td = ObjectUtil.createElement(lessonData.td);
-
-                    console.log("lessonData");
-                    console.dir(lessonData);
-
-                    ths.appendChild(th);
-                    tds.appendChild(td);
-                });*/
-
         table.appendChild(thead);
         table.appendChild(tbody);
-
         return table;
+    }
+
+    #createTeeboxesTable() {
+
     }
 }

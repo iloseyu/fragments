@@ -1,188 +1,256 @@
 import Table from "/js/common/Table.js";
 import ObjectUtil from "/js/common/ObjectUtil.js";
-import PageRequester from "./PageRequester.js";
+import PageRequester from "/js/common/PageRequester.js";
+import NumericUtil from "/js/common/NumericUtil.js";
+import dataRequester from "/js/common/dataRequester.js";
 
 export default class PagingTable extends Table {
-	#navProp = {
-		tag: 'nav', attributes: {'aria-label': 'Page navigation'}
-	}
+    static #DISPATCH_MOVE_TAB_EVENT = 'changeTab';
+    static get DISPATCH_MOVE_TAB_EVENT() {
+        return PagingTable.#DISPATCH_MOVE_TAB_EVENT;
+    }
 
-	#ulProp = {
-		tag: 'ul', classes: ['pagination', 'justify-content-center']
-	}
+    #navProp = {
+        tag: 'nav', attributes: {'aria-label': 'Page navigation'}
+    }
 
-	#liProp = {
-		tag: 'li', classes: ['page-item']
-	}
+    #ulProp = {
+        tag: 'ul', classes: ['pagination', 'justify-content-center']
+    }
 
-	#aProp = {
-		tag: 'a', classes: ['page-link']
-	}
+    #liProp = {
+        tag: 'li', classes: ['page-item']
+    }
 
-	/** @type {URL} */
-	#headerEndPoint;
-	/** @type {URL} */
-	#BodyEndPoint;
-	/** @type {Record<string, string>} */
-	#pageMetaData;
-	/** @type {Record<string, string>[]} */
-	#headerData;
-	/** @type {number} */
-	#currentPageNum = 1;
+    #aProp = {
+        tag: 'a', classes: ['page-link']
+    }
 
-	/**
-	 *
-	 * @param {string} targetId
-	 * @param {URL | string} headerEndPoint
-	 * @param {URL | string} bodyEndPoint
-	 * @param {Record<string, string>[]} headerData
-	 */
-	constructor(targetId, {headerEndPoint, bodyEndPoint, headerData}) {
-		if (!headerEndPoint && !headerData) {
-			throw new Error('headerEndPoint 또는 headerData 둘 중 하나는 있어야 합니다.');
-		}
-		super(targetId);
-		this.#headerEndPoint = PageRequester.getBaseUrl(headerEndPoint);
-		this.#headerData = headerData;
-		this.#BodyEndPoint = PageRequester.getBaseUrl(bodyEndPoint);
-	}
+    /** @type {URL[]} */
+    #headerEndPoint = [];
+    /** @type {URL[]} */
+    #BodyEndPoint = [];
+    /** @type {Record<string, string>} */
+    #pageMetaData;
+    /** @type {Record<string, string>[][]} */
+    #headerData = [];
+    /** @type {number} */
+    #currentPageNum = 1;
+    #currentTabIndex = 0;
+    #searchParams = new URLSearchParams();
 
-	async render() {
-		this._headerData = await this.#createHeaderData();
-		this._bodyData = await this.#createBodyData();
-		await super.render();
+    /**
+     *
+     * @param {string} targetId
+     * @param {URL[] | string[]} headerEndPoint
+     * @param {URL[] | string[]} bodyEndPoint
+     * @param {Record<string, string>[]} headerData
+     */
+    constructor(targetId, {
+        headerEndPoint,
+        bodyEndPoint,
+        headerData
+    }, thInBodyCount = 0, isCellActive = true, isBorderActive = true) {
+        if (!headerEndPoint && !headerData) {
+            throw new Error('headerEndPoint 또는 headerData 둘 중 하나는 필수 값 입니다.');
+        }
+        if (!bodyEndPoint) {
+            throw new Error('bodyEndPoint는 필 수 값 입니다.');
+        }
 
-		this.instance.addEventListener('click', this.#handlePageChange.bind(this));
-	}
+        super(targetId, thInBodyCount, isCellActive, isBorderActive);
 
-	_createElement() {
-		const table = super._createElement();
-		const pagination = this.#createNav();
+        if (headerEndPoint) {
+            headerEndPoint.forEach(headerEndPoint => this.#headerEndPoint.push(PageRequester.getBaseUrl(headerEndPoint)));
+        } else {
+            headerData.forEach(value => this.#headerData.push(value));
+        }
+        bodyEndPoint.forEach(bodyEndPoint => this.#BodyEndPoint.push(PageRequester.getBaseUrl(bodyEndPoint)));
 
-		return ObjectUtil.DivWrapping([table, pagination], {});
-	}
+        document.addEventListener(PagingTable.#DISPATCH_MOVE_TAB_EVENT, this.#onMoveTab.bind(this));
+    }
 
-	/**
-	 *
-	 * @returns {Promise<CellProp[]>}
-	 */
-	async #createHeaderData() {
-		let response = [];
-		if (this.#headerEndPoint) {
-			response = await PageRequester.get(this.#headerEndPoint);
-			response = response.data.map(value => ({
-				dataset: {...value, key: value.key}, textContent: value.name,
-			}));
-		} else if (this.#headerData) {
-			this.#headerData.forEach(value => {
-				response.push({dataset: {...value, key: value.key}, textContent: value.name});
-			});
-		}
-		return response;
-	}
+    async render() {
+        this._headerData = await this.#createHeaderData();
+        this._bodyData = await this.#createBodyData();
+        await super.render();
 
-	/**
-	 *
-	 * @returns {Promise<CellProp[][]>}
-	 */
-	async #createBodyData() {
-		const response = await PageRequester.get(this.#BodyEndPoint);
-		this.#pageMetaData = response.data;
-		return response.data.list.map((value, index) => {
-			const result = [];
+        this.instance.addEventListener('click', this.#handlePageChange.bind(this));
+    }
 
-			this._headerData.forEach(header => {
-				result.push({
-					dataset: value, textContent: value[header.dataset.key],
-				});
-			});
+    _createElement() {
+        const table = super._createElement();
+        const totalCount = this.#totalCount();
+        const pagination = this.#createPagination();
 
-			return result;
-		});
-	}
+        return ObjectUtil.DivWrapping([totalCount, table, pagination], {});
+    }
 
-	#createNav() {
-		const nav = ObjectUtil.createElement(this.#navProp);
-		const ul = this.#createUl();
-		nav.appendChild(ul);
-		return nav;
-	}
+    #totalCount() {
+        const totalCount = ObjectUtil.createElement({
+            tag: 'div',
+            textContent: `총 ${this.#pageMetaData.total} 건`,
+            classes: ['pt-1', 'pb-1', 'ps-2', 'pe-2', 'd-flex', 'align-items-center']
+        });
+        return ObjectUtil.DivWrapping([totalCount], {classes: ['d-flex', 'align-items-center', 'pt-2', 'pb-2']});
+    }
 
-	#createUl() {
-		const ul = ObjectUtil.createElement(this.#ulProp);
+    /**
+     *
+     * @returns {Promise<CellProp[]>}
+     */
+    async #createHeaderData() {
+        let response = [];
+        if (this.#headerEndPoint.length > 0) {
+            response = await PageRequester.get(this.#headerEndPoint[this.#currentTabIndex]);
+            response = response.data.map(value => ({
+                dataset: {...value, key: value.key}, textContent: value.name,
+            }));
+        } else if (this.#headerData[this.#currentTabIndex]) {
+            this.#headerData[this.#currentTabIndex].forEach(value => {
+                response.push({dataset: {...value, key: value.key}, textContent: value.name});
+            });
+        }
+        return response;
+    }
 
-		// 이전 페이지 버튼 추가
-		ul.appendChild(this.#createLi({
-			dataset: {
-				pageNum: this.#pageMetaData.prePage
-			}, textContent: '이전', attributes: {href: `#`}
-		}, {
-			isDisable: !this.#pageMetaData.hasPreviousPage
-		}));
+    /**
+     *
+     * @returns {Promise<CellProp[][]>}
+     */
+    async #createBodyData() {
+        const url = new URL(this.#BodyEndPoint[this.#currentTabIndex]);
+        this.#searchParams.forEach((value, key) => url.searchParams.set(key, value));
+        const response = await PageRequester.get(url);
+        this.#pageMetaData = response.data;
+        return response.data.list.map((value, index) => {
+            const result = [];
 
-		// 페이지 번호 버튼 추가
-		this.#pageMetaData.navigatepageNums.forEach(pageNum => {
-			const isActivate = pageNum === this.#pageMetaData.pageNum;
-			const li = this.#createLi({dataset: {pageNum}, textContent: pageNum.toString(), attributes: {href: '#'}}, {
-				isActivate
-			});
-			ul.appendChild(li);
-		});
+            this._headerData.forEach(header => {
+                let textContent = value[header.dataset.key];
 
-		// 다음 페이지 버튼 추가
-		ul.appendChild(this.#createLi({
-			dataset: {
-				pageNum: this.#pageMetaData.nextPage
-			}, textContent: '다음', attributes: {href: `#`}
-		}, {
-			isDisable: !this.#pageMetaData.hasNextPage
-		}));
+                // 타입이 dateTime 일 경우 날짜와 시간을 분리
+                if (header.dataset.type === 'dateTime') {
+                    const date = value[header.dataset.key].split('T');
+                    // debugger;
+                    textContent = date[0] + ' ' + date[1];
+                }
+                // 타입이 금액 일경우 금액 형식으로 변경
+                else if (header.dataset.type === 'currency') {
+                    textContent = NumericUtil.formatNumberAsWon(value[header.dataset.key]);
+                }
+                result.push({
+                    dataset: value, textContent
+                });
+            });
 
-		return ul;
-	}
+            return result;
+        });
+    }
 
-	/**
-	 *
-	 * @param {AnchorProp} prop
-	 * @param {boolean} isActivate
-	 * @param {boolean} isDisable
-	 * @returns {HTMLElement}
-	 */
-	#createLi(prop, {isActivate = false, isDisable = false} = {}) {
-		const li = ObjectUtil.createElement(this.#liProp);
-		isActivate && li.classList.add('active');
-		isDisable && li.classList.add('disabled');
-		li.appendChild(this.#createA(prop));
-		return li;
-	}
+    #createPagination() {
+        if (!this.#pageMetaData.navigatepageNums.length) {
+            return ObjectUtil.createElement({tag: 'div'});
+        }
+        const nav = ObjectUtil.createElement(this.#navProp);
+        const ul = this.#createUl();
+        nav.appendChild(ul);
+        return nav;
+    }
 
-	/**
-	 * @param {AnchorProp} prop
-	 * @returns {HTMLElement}
-	 */
-	#createA(prop) {
-		return ObjectUtil.createElement({...this.#aProp, ...prop});
-	}
+    #createUl() {
+        const ul = ObjectUtil.createElement(this.#ulProp);
 
-	/**
-	 * 인스턴스에 부착해서 캡처링으로 이벤트를 발생
-	 * @param {MouseEvent} event
-	 */
-	#handlePageChange(event) {
-		/** @type {HTMLAnchorElement} */
-		const target = event.target;
-		if (target.tagName !== 'A') {
-			return;
-		}
-		event.preventDefault();
+        // 이전 페이지 버튼 추가
+        ul.appendChild(this.#createLi({
+            dataset: {
+                pageNum: this.#pageMetaData.prePage
+            }, textContent: '이전', attributes: {href: `#`}
+        }, {
+            isDisable: !this.#pageMetaData.hasPreviousPage
+        }));
 
-		const li = target.parentElement;
-		if (li.classList.contains('disabled') || li.classList.contains('active')) {
-			return;
-		}
+        // 페이지 번호 버튼 추가
+        this.#pageMetaData.navigatepageNums.forEach(pageNum => {
+            const isActivate = pageNum === this.#pageMetaData.pageNum;
+            const li = this.#createLi({
+                dataset: {pageNum},
+                textContent: pageNum.toString(),
+                attributes: {href: '#'}
+            }, {
+                isActivate
+            });
+            ul.appendChild(li);
+        });
 
-		this.#currentPageNum = Number(event.target.dataset.pageNum);
-		this.#BodyEndPoint.searchParams.set('pageNum', this.#currentPageNum);
-		this.render();
-	}
+        // 다음 페이지 버튼 추가
+        ul.appendChild(this.#createLi({
+            dataset: {
+                pageNum: this.#pageMetaData.nextPage
+            }, textContent: '다음', attributes: {href: `#`}
+        }, {
+            isDisable: !this.#pageMetaData.hasNextPage
+        }));
+
+        return ul;
+    }
+
+    /**
+     *
+     * @param {AnchorProp} prop
+     * @param {boolean} isActivate
+     * @param {boolean} isDisable
+     * @returns {HTMLElement}
+     */
+    #createLi(prop, {isActivate = false, isDisable = false} = {}) {
+        const li = ObjectUtil.createElement(this.#liProp);
+        isActivate && li.classList.add('active');
+        isDisable && li.classList.add('disabled');
+        li.appendChild(this.#createA(prop));
+        return li;
+    }
+
+    /**
+     * @param {AnchorProp} prop
+     * @returns {HTMLElement}
+     */
+    #createA(prop) {
+        return ObjectUtil.createElement({...this.#aProp, ...prop});
+    }
+
+    /**
+     * 인스턴스에 부착해서 캡처링으로 이벤트를 발생
+     * @param {MouseEvent} event
+     */
+    async #handlePageChange(event) {
+        /** @type {HTMLAnchorElement} */
+        const target = event.target;
+        if (target.tagName !== 'A') {
+            return;
+        }
+        event.preventDefault();
+
+        const li = target.parentElement;
+        if (li.classList.contains('disabled') || li.classList.contains('active')) {
+            return;
+        }
+
+        this.#searchParams.set('pageNum', target.dataset.pageNum);
+
+        await this.render();
+    }
+
+    /**
+     *
+     * @param {CustomEvent} event
+     */
+    async #onMoveTab(event) {
+        const params = event.detail.searchParams;
+
+        this.#searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => this.#searchParams.set(key, value));
+
+        this.#currentTabIndex = params.tabIndex;
+        await this.render();
+    }
 }

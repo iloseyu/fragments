@@ -9,6 +9,12 @@ export default async function fetch(url, options = {}) {
             status: 200,
             json: async () => dummyMemberLessons
         }
+    } else if (url.pathname.startsWith('/api/members/teeboxes')) {
+        return {
+            ok: true,
+            status: 200,
+            json: async () => dummyMembersTeebox
+        }
     }
     else if (url.pathname.startsWith('/api/members')) {
         return {

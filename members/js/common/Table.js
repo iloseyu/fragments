@@ -4,17 +4,16 @@ import ObjectUtil from "/js/common/ObjectUtil.js";
 export default class Table extends AbstractRenderer {
 	/** @type {ElementProp} */
 	#tableProp = {
-		tag: 'table',
-		classes: ['text-center', 'table', 'table-sm', 'table-bordered', 'table-hover', 'align-middle']
+		tag: 'table', classes: ['text-center', 'table', 'table-sm', 'table-hover', 'align-middle']
 	}
 	/** @type {ElementProp} */
-	#colProp = {tag: 'col' }
+	#colProp = {tag: 'col'}
 	/** @type {ElementProp} */
 	#captionProp = {tag: 'caption'}
 	/** @type {ElementProp} */
 	#theadProp = {tag: 'thead'}
 	/** @type {ElementProp} */
-	#tbodyProp = {tag: 'tbody',classes: ['table-group-divider']}
+	#tbodyProp = {tag: 'tbody', classes: ['table-group-divider']}
 	/** @type {ElementProp} */
 	#thInTheadProp = {
 		attributes: {scope: "col"}
@@ -27,7 +26,13 @@ export default class Table extends AbstractRenderer {
 	 * cell 은 tag가 동적으로 생성되기 떄문에 미리 정의 하지 않습니다.
 	 *  @type {CellProp}
 	 * */
-	#cellProp = {}
+	#cellProp = { classes: ['pt-2', 'pb-2']}
+	#emptyCellProp = {
+		tag: 'td',
+		textContent: '조회할 데이터가 없습니다.',
+		classes: ['p-4', 'text-muted', 'display-6'],
+		attributes: {colspan: 0} // 사용시 동적으로 대입합니다.
+	}
 
 	/**
 	 * @type {CellProp[]}
@@ -45,10 +50,15 @@ export default class Table extends AbstractRenderer {
 	#thInBodyCount;
 	/** @type {HTMLTableCellElement} */
 	#selectedTarget
+	#isCellActive;
 
-	constructor(targetId, thInBodyCount = 0) {
+	constructor(targetId, thInBodyCount = 0, isCellActive = true, isBorderActive = true) {
 		super(targetId);
 		this.#thInBodyCount = thInBodyCount;
+		this.#isCellActive = isCellActive;
+		if (isBorderActive) {
+			this.#tableProp.classes.push('table-bordered');
+		}
 	}
 
 	async render() {
@@ -72,7 +82,7 @@ export default class Table extends AbstractRenderer {
 
 		// 가공
 		table.appendChild(this.#createColgroup());
-		false && table.appendChild(this.#createCaption()); // 캡션이 언제 필요할지 생가각해보고 활성화하기
+		false && table.appendChild(this.#createCaption()); // 캡션이 언제 필요할지 생각해보고 활성화하기
 		table.appendChild(this.#createThead());
 		table.appendChild(this.#createTbody());
 
@@ -131,6 +141,7 @@ export default class Table extends AbstractRenderer {
 			const createdTr = this.#createRow(data, this.#thInBodyCount);
 			tbody.appendChild(createdTr);
 		});
+		if (this._bodyData.length === 0) tbody.appendChild(this.#createEmptyTr());
 
 		tbody.addEventListener("click", this._handleTdCell.bind(this));
 
@@ -147,14 +158,14 @@ export default class Table extends AbstractRenderer {
 	#createRow(data, thCount) {
 		const tr = document.createElement("tr");
 
-		data.forEach((value, index) => {
+		data.forEach((prop, index) => {
 			let cell;
 			// 지정한 카운트만큼 헤더를 만듭니다.
 			if (index < thCount) {
 				const thProp = this._headerData.length === thCount ? this.#thInTbodyProp : this.#thInTheadProp;
-				cell = this.#createCell('th', {...thProp, ...value});
+				cell = this.#createCell('th', {...thProp, ...prop});
 			} else {
-				cell = this.#createCell('td', value);
+				cell = this.#createCell('td', prop);
 			}
 			tr.appendChild(cell);
 		});
@@ -168,7 +179,14 @@ export default class Table extends AbstractRenderer {
 	 * @returns {HTMLTableCellElement}
 	 */
 	#createCell(tag, prop) {
-		return ObjectUtil.createElement({tag, ...this.#cellProp, ...prop});
+		// 참조 변경을 조심해서 사용하십시오.
+		const mergedProp = Object.assign({}, this.#cellProp, prop);
+		return ObjectUtil.createElement({tag, ...mergedProp});
+	}
+
+	#createEmptyTr() {
+		const tr = ObjectUtil.createElement({tag: 'tr'});
+		return ObjectUtil.createElement({...this.#emptyCellProp, attributes: {colspan: this._headerData.length}});
 	}
 
 	/**
@@ -183,9 +201,30 @@ export default class Table extends AbstractRenderer {
 			return;
 		}
 
-		this.#selectedTarget &&
-		this.#selectedTarget.classList.toggle('bg-success-subtle');
-		target.classList.toggle('bg-success-subtle');
+		this.#activeCell(target);
+		return target;
+	}
+
+	/**
+	 *
+	 * @param {HTMLElement} target
+	 */
+	#activeCell(target) {
+		if(!this.#isCellActive && this.#selectedTarget) {
+			this.#selectedTarget.parentElement.childNodes.forEach(td => {
+				td.classList.remove('bg-success-subtle');
+			});
+		} else {
+			this.#selectedTarget &&
+			this.#selectedTarget.classList.toggle('bg-success-subtle');
+		}
+		if (this.#isCellActive) {
+			target.classList.toggle('bg-success-subtle');
+		} else {
+			target.parentElement.childNodes.forEach(td => {
+				td.classList.toggle('bg-success-subtle');
+			});
+		}
 		this.#selectedTarget = target;
 
 		return target;

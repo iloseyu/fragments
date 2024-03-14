@@ -1,4 +1,4 @@
-import { fetch } from '/js/user-management/dummyData.js';
+// import {fetch} from '/js/dummyData/dummyData.js';
 
 export default class PageRequester {
 	static #baseUrl = window.location.origin;
@@ -22,7 +22,6 @@ export default class PageRequester {
 	 * @returns {Promise<any>}
 	 */
 	static async get(url) {
-		debugger;
 		const response = await fetch(url, {
 			headers: {
 				'X-CSRF-TOKEN': this.csrf

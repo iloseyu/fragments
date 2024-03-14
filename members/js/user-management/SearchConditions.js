@@ -62,11 +62,18 @@ export default class SearchCondition extends AbstractRenderer {
 
         const wrapper = ObjectUtil.DivWrapping([categoriesConditionDiv, datesConditionDiv]);
 
-        wrapper.addEventListener("click", this.#handleActiveButton.bind(this));
+        // wrapper.addEventListener("click", this.#handleActiveButton.bind(this));
 
         categoriesConditionDiv.querySelectorAll("button").forEach(button => {
             button.addEventListener("click", this.#handleCategoryButtonClick.bind(this));
         });
+
+        datesConditionDiv.querySelectorAll("button").forEach(button => {
+            button.addEventListener("click", this.#handleDateButtonClick.bind(this));
+        });
+
+        startDatePicker.querySelector("input").addEventListener("change", this.#handleDatePickerChange.bind(this));
+        endDatePicker.querySelector("input").addEventListener("change", this.#handleDatePickerChange.bind(this));
 
         return wrapper;
     }
@@ -85,7 +92,7 @@ export default class SearchCondition extends AbstractRenderer {
         return ObjectUtil.DivWrapping(buttons, {classes: ["col-6", "my-3"]});
     }
 
-/*    #createDatePicker(name) {
+    #createDatePicker(name) {
         const datePickerDiv = document.createElement("div");
         const datePicker = document.createElement("input");
         datePickerDiv.classList.add("col-3", "my-3");
@@ -96,7 +103,7 @@ export default class SearchCondition extends AbstractRenderer {
         datePicker.name = "search" + name;
         datePicker.value = new Date().toISOString().split("T")[0];
         return datePickerDiv;
-    }*/
+    }
 
     #separationLine() {
         const line = document.createElement("hr");
@@ -117,7 +124,6 @@ export default class SearchCondition extends AbstractRenderer {
 
     #handleCategoryButtonClick(event) {
         const buttonValue = event.target.dataset.param;
-        const searchResult = new SearchResult("searchResult");
         if (buttonValue === "00") {
             console.log("예약내역 확인");
         } else if (buttonValue === "01") {
@@ -125,7 +131,23 @@ export default class SearchCondition extends AbstractRenderer {
         } else if (buttonValue === "02") {
             console.log("이용권 상세보기");
         }
+    }
 
+    #handleDateButtonClick(event) {
+        const buttonValue = event.target.dataset.param;
+        if (buttonValue === "7") {
+            console.log("7일");
+        } else if (buttonValue === "1") {
+            console.log("1개월");
+        } else if (buttonValue === "3") {
+            console.log("3개월");
+        } else if (buttonValue === "6") {
+            console.log("6개월");
+        }
+    }
+
+    #handleDatePickerChange(event) {
+        console.log(event.target.value);
     }
 
 }
