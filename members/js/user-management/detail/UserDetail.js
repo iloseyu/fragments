@@ -113,7 +113,6 @@ export default class UserDetail extends AbstractRenderer {
 
     async render() {
         this.#userDetail = await userDetail();
-
         await super.render();
     }
 

@@ -1,4 +1,4 @@
-import fetch from '/js/user-management/dummyData.js';
+import fetch from '/js/dummyData/ticketDummyData.js';
 
 /**
  * @typedef {Object} MemberDetail
@@ -10,9 +10,8 @@ import fetch from '/js/user-management/dummyData.js';
  *
  * @returns {Promise<MemberDetail>}
  */
-const userDetail = async () => {
-    let url = location.pathname;
-    const apiUrl = new URL('/api/com' + url, location.origin)
+const modifyTicketModal = async () => {
+    const apiUrl = new URL('/api/admin/ticket', location.origin)
     const response = await fetch(apiUrl, {});
     if (!response.ok) {
         throw new Error('데이터를 불러오는데 실패했습니다.');
@@ -26,4 +25,4 @@ const userDetail = async () => {
     return response.json();
 }
 
-export { userDetail };
+export { modifyTicketModal };
